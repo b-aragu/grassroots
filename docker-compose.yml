@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/grassroots
+    depends_on:
+      - db
+    networks:
+      - grassroots-net
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
+
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: grassroots
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - grassroots-net
+
+networks:
+  grassroots-net:
+    driver: bridge
+
+volumes:
+  postgres_data:

@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String        @id @default(uuid())
+  email     String        @unique
+  password  String        
+  name      String
+  role      Role          @default(VOLUNTEER)
+  points    Int           @default(0)
+  teamId    String?
+  team      Team?         @relation(fields: [teamId], references: [id])
+  checkIns  CheckIn[]
+  pledges   PledgedVote[]
+  assignedMissions Mission[]
+  badges    UserBadge[]
+  createdAt DateTime      @default(now())
+}
+
+model Team {
+  id        String   @id @default(uuid())
+  name      String
+  members   User[]
+  createdAt DateTime @default(now())
+}
+
+model Ward {
+  id        String   @id @default(uuid())
+  name      String
+  county    String
+  geometry  Json?    // GeoJSON for heatmap
+  missions  Mission[]
+}
+
+model Mission {
+  id          String   @id @default(uuid())
+  wardId      String
+  ward        Ward     @relation(fields: [wardId], references: [id])
+  location    String   // Address or Description
+  geoLat      Float
+  geoLng      Float
+  status      MissionStatus @default(PENDING)
+  assignedToId String?
+  assignedTo   User?     @relation(fields: [assignedToId], references: [id])
+  checkIn     CheckIn?
+  createdAt   DateTime @default(now())
+}
+
+model CheckIn {
+  id          String   @id @default(uuid())
+  missionId   String   @unique
+  mission     Mission  @relation(fields: [missionId], references: [id])
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  timestamp   DateTime @default(now())
+  lat         Float
+  lng         Float
+  voiceNoteUrl String?
+  photoUrls   String[]
+  surveyData  Json?
+}
+
+model PledgedVote {
+  id          String   @id @default(uuid())
+  wardId      String
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  supportType SupportType
+  timestamp   DateTime @default(now())
+}
+
+model Badge {
+  id          String      @id @default(uuid())
+  name        String
+  description String
+  icon        String
+  category    String      @default("ACHIEVEMENT") // ACHIEVEMENT, LEVEL, ROLE
+  users       UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  badgeId   String
+  badge     Badge    @relation(fields: [badgeId], references: [id])
+  earnedAt  DateTime @default(now())
+
+  @@unique([userId, badgeId])
+}
+
+enum Role {
+  VOLUNTEER
+  ADMIN
+  HQ_STAFF
+}
+
+enum MissionStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+}
+
+enum SupportType {
+  STRONG_YES
+  LEAN_YES
+  UNDECIDED
+  NO
+}

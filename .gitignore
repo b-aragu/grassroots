@@ -1,0 +1,49 @@
+# General
+.DS_Store
+node_modules/
+dist/
+build/
+coverage/
+.env
+.env.*
+!.env.example
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+*.sublime-workspace
+
+# Backend
+backend/dist/
+backend/node_modules/
+backend/coverage/
+backend/.env
+backend/.env.*
+
+# Dashboard (Next.js)
+dashboard/.next/
+dashboard/out/
+dashboard/build/
+dashboard/node_modules/
+dashboard/.env
+dashboard/.env.*
+dashboard/next-env.d.ts
+
+# Mobile (Expo)
+mobile/.expo/
+mobile/web-build/
+mobile/node_modules/
+mobile/*.jks
+mobile/*.p8
+mobile/*.p12
+mobile/*.key
+mobile/*.mobileprovision
+mobile/ios/
+mobile/android/
+mobile/dist/
+mobile/expo-env.d.ts
