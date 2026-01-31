@@ -111,22 +111,27 @@ async function main() {
         const wardId = wardMap[agent.assignedWardName];
         if (!wardId) continue;
 
-        // Generate 5-10 activity points per agent
-        const numActivities = Math.floor(Math.random() * 5) + 5;
+        // Guarantee at least 1 check-in for EVERY agent
+        const numActivities = Math.floor(Math.random() * 5) + 1; // 1-5 activities
 
         for (let i = 0; i < numActivities; i++) {
-            const timeOffset = Math.random() * (Date.now() - oneWeekAgo);
-            const actionTime = new Date(oneWeekAgo + timeOffset);
+            // Distribute times: mostly recent (last 24h) for demo purposes
+            const isRecent = Math.random() > 0.3;
+            const timeOffset = isRecent
+                ? Math.random() * (24 * 60 * 60 * 1000) // Last 24h
+                : Math.random() * (7 * 24 * 60 * 60 * 1000); // Last week
 
-            // Random jitter
-            const lat = center[0] + (Math.random() - 0.5) * 0.05;
-            const lng = center[1] + (Math.random() - 0.5) * 0.05;
+            const actionTime = new Date(Date.now() - timeOffset);
+
+            // Larger Random jitter to spread them out visually on the map (approx 1-2km spread)
+            const lat = center[0] + (Math.random() - 0.5) * 0.04;
+            const lng = center[1] + (Math.random() - 0.5) * 0.04;
 
             // Create a Mission first (Completed)
             const mission = await prisma.mission.create({
                 data: {
                     wardId: wardId,
-                    location: `Patrol point near ${agent.assignedWardName} center`,
+                    location: `Patrol point near ${agent.assignedWardName}`,
                     geoLat: lat,
                     geoLng: lng,
                     status: 'COMPLETED',

@@ -13,7 +13,8 @@ interface BackendVolunteer {
 
 interface BackendCheckin {
     id: number;
-    volunteerId: string;
+    userId: string; // Correct field name from Prisma
+    volunteerId?: string; // KEEP compatible if mapped differently elsewhere
     lat: number;
     lng: number;
     batteryLevel?: number;
@@ -77,9 +78,11 @@ export const useAgents = () => {
                 // Group checkins by volunteerId to find the latest one for each
                 const latestCheckinsMap = new Map<string, BackendCheckin>();
                 checkins.forEach((c) => {
-                    const existing = latestCheckinsMap.get(c.volunteerId);
+                    // Backend returns 'userId', not 'volunteerId'
+                    const vId = c.userId || c.volunteerId;
+                    const existing = latestCheckinsMap.get(vId);
                     if (!existing || new Date(c.createdAt) > new Date(existing.createdAt)) {
-                        latestCheckinsMap.set(c.volunteerId, c);
+                        latestCheckinsMap.set(vId, c);
                     }
                 });
 
