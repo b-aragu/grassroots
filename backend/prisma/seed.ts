@@ -1,109 +1,159 @@
-import { PrismaClient, Role, MissionStatus, SupportType } from '@prisma/client';
+
+import { PrismaClient, Role, MissionStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
+const CONSTITUENCIES = ['Roysambu', 'Kasarani', 'Westlands', 'Langata', 'Dagoretti North'];
+const WARD_NAMES = {
+    'Roysambu': ['Githurai', 'Kahawa West', 'Zimmerman', 'Roysambu', 'Kahawa'],
+    'Kasarani': ['Clay City', 'Mwiki', 'Kasarani', 'Njiru', 'Ruai'],
+    'Westlands': ['Kitisuru', 'Parklands', 'Karura', 'Kangemi', 'Mountain View'],
+    'Langata': ['Karen', 'Nairobi West', 'Mugumoini', 'South C', 'Nyayo Highrise'],
+    'Dagoretti North': ['Kilimani', 'Kawangware', 'Gatina', 'Kileleshwa', 'Kabiro']
+};
+
+const NAMES = [
+    'Kennedy', 'Sarah', 'David', 'Grace', 'Brian', 'James', 'Peter', 'John', 'Mary', 'Lucy',
+    'Michael', 'Antony', 'Esther', 'Kevin', 'Mercy', 'Dennis', 'Rose', 'Paul', 'Joyce', 'Emily'
+];
+const SURNAMES = [
+    'Mwangi', 'Otieno', 'Kamau', 'Ochieng', 'Mutua', 'Wanjiku', 'Odhiambo', 'Kimani', 'Njoroge', 'Auma',
+    'Kipkorir', 'Nyambura', 'Nduta', 'Wafula', 'Anyango', 'Waweru', 'Njeri', 'Omondi', 'Kariuki', 'Nalianya'
+];
+
 async function main() {
-    console.log('🌱 Starting seeding...');
+    console.log('🌱 Starting seed...');
+
+    const hashedPassword = await bcrypt.hash('password123', 10);
 
     // 1. Create Wards
-    const ward1 = await prisma.ward.upsert({
-        where: { id: 'ward-001' },
-        update: {},
-        create: {
-            id: 'ward-001',
-            name: 'Kibera Central',
-            county: 'Nairobi',
-        },
-    });
+    console.log('Creating Wards...');
+    const wardMap: Record<string, string> = {}; // Name -> ID
 
-    const ward2 = await prisma.ward.upsert({
-        where: { id: 'ward-002' },
-        update: {},
-        create: {
-            id: 'ward-002',
-            name: 'Westlands',
-            county: 'Nairobi',
-        },
-    });
-
-    console.log('✅ Wards created');
-
-    // 2. Create Users
-    const passwordHash = await bcrypt.hash('password123', 10);
-
-    const admin = await prisma.user.upsert({
-        where: { email: 'admin@grassroots.com' },
-        update: {},
-        create: {
-            email: 'admin@grassroots.com',
-            name: 'Admin User',
-            password: passwordHash,
-            role: Role.ADMIN,
-        },
-    });
-
-    const volunteer = await prisma.user.upsert({
-        where: { email: 'volunteer@grassroots.com' },
-        update: {},
-        create: {
-            email: 'volunteer@grassroots.com',
-            name: 'Jane Doe',
-            password: passwordHash,
-            role: Role.VOLUNTEER,
-            points: 50,
-        },
-    });
-
-    console.log('✅ Users created');
-
-    // 2.5 Create Badges
-    const badges = [
-        { id: 'badge-001', name: 'New Recruit', description: 'Joined the campaign', icon: 'medal' },
-        { id: 'badge-002', name: 'Field Operative', description: 'Completed 5 missions', icon: 'map-pin' },
-        { id: 'badge-003', name: 'Campaign Hero', description: 'Earned 1000 points', icon: 'trophy' },
-    ];
-
-    for (const badge of badges) {
-        await prisma.badge.upsert({
-            where: { id: badge.id },
-            update: {},
-            create: badge,
-        });
+    for (const constituency of CONSTITUENCIES) {
+        const wards = WARD_NAMES[constituency as keyof typeof WARD_NAMES] || [];
+        for (const wardName of wards) {
+            try {
+                // Upsert finding by name if possible, but name isn't unique in schema directly? 
+                // Schema: id, name, county. uniqueness not guaranteed by schema but we'll assume uniqueness for seeding.
+                // We'll just create or find first.
+                let ward = await prisma.ward.findFirst({ where: { name: wardName } });
+                if (!ward) {
+                    ward = await prisma.ward.create({
+                        data: {
+                            name: wardName,
+                            county: 'Nairobi',
+                        }
+                    });
+                }
+                wardMap[wardName] = ward.id;
+            } catch (e) {
+                console.error(`Error creating ward ${wardName}:`, e);
+            }
+        }
     }
 
-    console.log('✅ Badges created');
+    // 2. Create Users (Agents)
+    console.log('Creating Agents...');
+    const agents = [];
+    // Flatten attributes for easier iteration
+    const agentBlueprints = [];
+    for (const constituency of CONSTITUENCIES) {
+        const wards = WARD_NAMES[constituency as keyof typeof WARD_NAMES] || [];
+        for (const ward of wards) {
+            const agentsPerWard = Math.floor(Math.random() * 2) + 1; // 1-3 agents per ward
+            for (let i = 0; i < agentsPerWard; i++) {
+                agentBlueprints.push({ wardName: ward, constituency });
+            }
+        }
+    }
 
-    // 3. Create Missions
-    await prisma.mission.create({
-        data: {
-            wardId: ward1.id,
-            location: 'Olympic Primary School',
-            geoLat: -1.3129,
-            geoLng: 36.7884,
-            status: MissionStatus.PENDING,
-        },
-    });
+    for (const blueprint of agentBlueprints) {
+        const name = `${NAMES[Math.floor(Math.random() * NAMES.length)]} ${SURNAMES[Math.floor(Math.random() * SURNAMES.length)]}`;
+        const email = `${name.toLowerCase().replace(' ', '.')}.${Math.floor(Math.random() * 10000)}@grassroots.local`;
 
-    await prisma.mission.create({
-        data: {
-            wardId: ward2.id,
-            location: 'Sarit Centre Entrance',
-            geoLat: -1.2621,
-            geoLng: 36.8025,
-            status: MissionStatus.IN_PROGRESS,
-            assignedToId: volunteer.id,
-        },
-    });
+        try {
+            const agent = await prisma.user.create({
+                data: {
+                    email,
+                    name,
+                    password: hashedPassword,
+                    role: 'VOLUNTEER',
+                    points: Math.floor(Math.random() * 500),
+                }
+            });
+            agents.push({ ...agent, assignedWardName: blueprint.wardName, assignedConstituency: blueprint.constituency });
+            process.stdout.write('.');
+        } catch (e) {
+            // Ignore duplicates
+        }
+    }
+    console.log(`\n✅ Created ${agents.length} agents.`);
 
-    console.log('✅ Missions created');
+    // 3. Create Missions and Checkins (History)
+    console.log('Creating activity history...');
+
+    const centers: Record<string, [number, number]> = {
+        'Roysambu': [-1.218, 36.882],
+        'Kasarani': [-1.220, 36.900],
+        'Westlands': [-1.265, 36.800],
+        'Langata': [-1.320, 36.770],
+        'Dagoretti North': [-1.280, 36.750]
+    };
+
+    const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+
+    for (const agent of agents) {
+        if (!agent.assignedConstituency) continue;
+
+        const center = centers[agent.assignedConstituency] || [-1.2921, 36.8219];
+        const wardId = wardMap[agent.assignedWardName];
+        if (!wardId) continue;
+
+        // Generate 5-10 activity points per agent
+        const numActivities = Math.floor(Math.random() * 5) + 5;
+
+        for (let i = 0; i < numActivities; i++) {
+            const timeOffset = Math.random() * (Date.now() - oneWeekAgo);
+            const actionTime = new Date(oneWeekAgo + timeOffset);
+
+            // Random jitter
+            const lat = center[0] + (Math.random() - 0.5) * 0.05;
+            const lng = center[1] + (Math.random() - 0.5) * 0.05;
+
+            // Create a Mission first (Completed)
+            const mission = await prisma.mission.create({
+                data: {
+                    wardId: wardId,
+                    location: `Patrol point near ${agent.assignedWardName} center`,
+                    geoLat: lat,
+                    geoLng: lng,
+                    status: 'COMPLETED',
+                    assignedToId: agent.id,
+                    createdAt: actionTime
+                }
+            });
+
+            // Create CheckIn linked to Mission
+            await prisma.checkIn.create({
+                data: {
+                    missionId: mission.id,
+                    userId: agent.id,
+                    lat: lat,
+                    lng: lng,
+                    timestamp: actionTime,
+                    // Simulate random survey data or comments if needed
+                }
+            });
+        }
+    }
+
+    console.log('\n✅ Seeding complete!');
+    await prisma.$disconnect();
 }
 
-main()
-    .catch((e) => {
-        console.error(e);
-        process.exit(1);
-    })
-    .finally(async () => {
-        await prisma.$disconnect();
-    });
+main().catch(e => {
+    console.error(e);
+    process.exit(1);
+});

@@ -1,18 +1,32 @@
-'use client';
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Trophy, ChevronRight } from 'lucide-react';
+import { Agent } from '@/hooks/useAgents';
 
-const AGENTS = [
-    { id: 1, name: 'Kennedy M.', score: 98, trend: '+4', checkins: 42, avatar: 'KM', rank: 1 },
-    { id: 2, name: 'Sarah A.', score: 94, trend: '+2', checkins: 38, avatar: 'SA', rank: 2 },
-    { id: 3, name: 'David O.', score: 91, trend: '+5', checkins: 36, avatar: 'DO', rank: 3 },
-    { id: 4, name: 'Grace T.', score: 88, trend: '-1', checkins: 32, avatar: 'GT', rank: 4 },
-    { id: 5, name: 'Brian K.', score: 85, trend: '+3', checkins: 29, avatar: 'BK', rank: 5 },
-];
+export function AgentLeaderboard({ agents = [], checkins = [] }: { agents?: Agent[], checkins?: any[] }) {
 
-export function AgentLeaderboard() {
+    // Calculate scores (using checkin count for simplicity if points not available)
+    // In real app, points would come from backend. We have points in Agent interface? 
+    // Agent interface in hook has battery, signal etc. Let's use checkin count as metric for now.
+
+    // Create map of checkin counts
+    const checkinCounts: Record<string, number> = {};
+    checkins.forEach(c => {
+        checkinCounts[c.userId] = (checkinCounts[c.userId] || 0) + 1;
+    });
+
+    const leaderboard = agents
+        .map(agent => ({
+            id: agent.id,
+            name: agent.name,
+            score: checkinCounts[agent.id] || 0, // Score = Checkins
+            avatar: agent.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase(),
+            trend: '+0' // dynamic trend hard without history diffs
+        }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5) // Top 5
+        .map((agent, index) => ({ ...agent, rank: index + 1 }));
+
     return (
         <Card className="h-full shadow-sm border-slate-200">
             <CardHeader className="flex flex-row items-center justify-between py-4 border-b border-slate-100">
@@ -28,7 +42,8 @@ export function AgentLeaderboard() {
             </CardHeader>
             <CardContent className="p-0">
                 <div className="divide-y divide-slate-50">
-                    {AGENTS.map((agent) => (
+                    {leaderboard.length === 0 && <div className="p-4 text-center text-xs text-slate-400">No data available</div>}
+                    {leaderboard.map((agent) => (
                         <div key={agent.id} className="flex items-center p-4 hover:bg-slate-50 transition-colors group">
                             <div className={`
                                 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mr-4
@@ -46,12 +61,12 @@ export function AgentLeaderboard() {
 
                             <div className="flex-1 min-w-0">
                                 <p className="text-xs font-bold text-slate-900 truncate">{agent.name}</p>
-                                <p className="text-[10px] text-slate-500">{agent.checkins} check-ins</p>
+                                <p className="text-[10px] text-slate-500">{agent.score} actions</p>
                             </div>
 
                             <div className="text-right">
-                                <p className="text-sm font-bold text-slate-900">{agent.score}</p>
-                                <p className="text-[10px] text-green-500 font-medium">Eff. Score</p>
+                                <p className="text-sm font-bold text-slate-900">{agent.score * 10}</p>
+                                <p className="text-[10px] text-green-500 font-medium">XP Points</p>
                             </div>
                         </div>
                     ))}

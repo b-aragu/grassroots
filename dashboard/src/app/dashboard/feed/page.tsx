@@ -13,8 +13,10 @@ export default function FeedPage() {
         const fetchFeed = async () => {
             try {
                 const res = await api.get('/checkins');
-                // Sort by newest
-                const sorted = res.data.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                // Filter out items without valid dates and sort by newest
+                const sorted = (Array.isArray(res.data) ? res.data : [])
+                    .filter((item: any) => item.createdAt && !isNaN(new Date(item.createdAt).getTime()))
+                    .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
                 setCheckins(sorted);
             } catch (error) {
                 console.error(error);

@@ -1,21 +1,52 @@
-'use client';
-
+import { useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MessageSquare, MapPin, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { Agent } from '@/hooks/useAgents';
 
-const ACTIVITIES = [
-    { id: 1, user: 'Sarah K.', action: 'Checked in', location: 'Westlands', time: 'Just now', type: 'success', message: 'Crowd gathering at station A.' },
-    { id: 2, user: 'John D.', action: 'Reported Issue', location: 'Kibra', time: '2m ago', type: 'error', message: 'Missing materials.' },
-    { id: 3, user: 'System', action: 'Alert', location: 'Server', time: '5m ago', type: 'warning', message: 'High latency detected.' },
-    { id: 4, user: 'Mary W.', action: 'Checked in', location: 'Langata', time: '12m ago', type: 'success', message: '' },
-    { id: 5, user: 'Peter M.', action: 'En Route', location: 'Roysambu', time: '15m ago', type: 'info', message: '' },
-    { id: 6, user: 'James O.', action: 'Checked in', location: 'Starehe', time: '22m ago', type: 'success', message: 'All smooth here.' },
-];
+// Interface matching the backend checkin slightly adapted for display
+interface DashboardActivity {
+    id: string; // or number
+    user: string;
+    action: string;
+    location: string;
+    time: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+    message?: string;
+}
 
-export function LiveActivityStream() {
+export function LiveActivityStream({ checkins = [], agents = [] }: { checkins?: any[], agents?: Agent[] }) {
+
+    // Transform raw checkins to activities
+    const activities: DashboardActivity[] = checkins
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) // Newest first
+        .slice(0, 50) // Limit to 50 items
+        .map(c => {
+            const agent = agents.find(a => a.id === c.userId);
+            const userName = agent ? agent.name : 'Unknown User';
+            const location = agent ? agent.ward || 'Unknown Location' : 'Field';
+
+            // Heuristics for type
+            let type: DashboardActivity['type'] = 'success';
+            if ((c.comment || '').toLowerCase().includes('issue')) type = 'error';
+            else if ((c.comment || '').toLowerCase().includes('alert')) type = 'warning';
+
+            return {
+                id: c.id,
+                user: userName,
+                action: c.comment ? 'Reported' : 'Checked In',
+                location: location,
+                time: !isNaN(new Date(c.createdAt).getTime())
+                    ? formatDistanceToNow(new Date(c.createdAt), { addSuffix: true })
+                    : 'Just now',
+                type: type,
+                message: c.comment || ''
+            };
+        });
+
     return (
         <Card className="h-full flex flex-col shadow-sm border-slate-200">
             <CardHeader className="py-3 px-4 border-b border-slate-100 bg-slate-50/50">
@@ -30,7 +61,12 @@ export function LiveActivityStream() {
             <CardContent className="p-0 flex-1 relative">
                 <ScrollArea className="h-[400px]">
                     <div className="divide-y divide-slate-100">
-                        {ACTIVITIES.map((activity) => (
+                        {activities.length === 0 && (
+                            <div className="p-8 text-center text-slate-400 text-xs text-mono">
+                                No recent activity
+                            </div>
+                        )}
+                        {activities.map((activity) => (
                             <div key={activity.id} className="p-4 hover:bg-slate-50 transition-colors group">
                                 <div className="flex gap-3">
                                     <Avatar className="h-8 w-8 border border-slate-200">

@@ -53,7 +53,18 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return null;
 };
 
-export function MainCommandChart() {
+export function MainCommandChart({ data }: { data?: any[] }) {
+    // Fallback static data if none provided
+    const chartData = data || [
+        { name: 'Mon', checkins: 0, target: 50, cumulative: 0 },
+        { name: 'Tue', checkins: 0, target: 50, cumulative: 0 },
+        { name: 'Wed', checkins: 0, target: 50, cumulative: 0 },
+        { name: 'Thu', checkins: 0, target: 50, cumulative: 0 },
+        { name: 'Fri', checkins: 0, target: 50, cumulative: 0 },
+        { name: 'Sat', checkins: 0, target: 50, cumulative: 0 },
+        { name: 'Sun', checkins: 0, target: 50, cumulative: 0 },
+    ];
+
     return (
         <Card className="h-full shadow-sm border-slate-200">
             <CardHeader className="flex flex-row items-center justify-between py-4 border-b border-slate-100">
@@ -73,7 +84,7 @@ export function MainCommandChart() {
             <CardContent className="p-4 pl-0">
                 <div className="h-[350px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                        <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                             <defs>
                                 <linearGradient id="colorCumulative" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />

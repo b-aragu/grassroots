@@ -22,32 +22,32 @@ const colorMap = {
         bg: 'bg-green-500/10',
         border: 'border-green-500/20',
         chart: '#22c55e',
-        gradientFrom: '#22c55e',
-        gradientTo: '#22c55e'
+        gradientVia: 'via-green-500',
+        stroke: 'stroke-green-500',
     },
     blue: {
         text: 'text-blue-500',
         bg: 'bg-blue-500/10',
         border: 'border-blue-500/20',
         chart: '#3b82f6',
-        gradientFrom: '#3b82f6',
-        gradientTo: '#3b82f6'
+        gradientVia: 'via-blue-500',
+        stroke: 'stroke-blue-500',
     },
     purple: {
         text: 'text-purple-500',
         bg: 'bg-purple-500/10',
         border: 'border-purple-500/20',
         chart: '#a855f7',
-        gradientFrom: '#a855f7',
-        gradientTo: '#a855f7'
+        gradientVia: 'via-purple-500',
+        stroke: 'stroke-purple-500',
     },
     amber: {
         text: 'text-amber-500',
         bg: 'bg-amber-500/10',
         border: 'border-amber-500/20',
         chart: '#f59e0b',
-        gradientFrom: '#f59e0b',
-        gradientTo: '#f59e0b'
+        gradientVia: 'via-amber-500',
+        stroke: 'stroke-amber-500',
     },
 };
 
@@ -67,7 +67,7 @@ export function IntelligentMetricCard({
     return (
         <Card className="relative overflow-hidden bg-white hover:shadow-xl transition-all duration-300 border-slate-200 group">
             {/* Gradient Top Border */}
-            <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-${colors.chart} to-transparent opacity-50`}></div>
+            <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent ${colors.gradientVia} to-transparent opacity-50`}></div>
 
             <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-4">
@@ -79,7 +79,7 @@ export function IntelligentMetricCard({
                                 <div className="relative h-6 w-6 ml-2 group/ring">
                                     <svg className="h-full w-full -rotate-90 text-slate-200" viewBox="0 0 36 36">
                                         <circle cx="18" cy="18" r="16" fill="none" className="stroke-current" strokeWidth="4"></circle>
-                                        <circle cx="18" cy="18" r="16" fill="none" className={`stroke-${color}-500 transition-all duration-1000 ease-out`} strokeWidth="4" strokeDasharray={`${targetProgress}, 100`}></circle>
+                                        <circle cx="18" cy="18" r="16" fill="none" className={`${colors.stroke} transition-all duration-1000 ease-out`} strokeWidth="4" strokeDasharray={`${targetProgress}, 100`}></circle>
                                     </svg>
                                     <div className="absolute inset-0 flex items-center justify-center text-[6px] font-bold text-slate-600 opacity-0 group-hover/ring:opacity-100 transition-opacity">
                                         {targetProgress}%
