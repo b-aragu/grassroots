@@ -42,6 +42,8 @@ model Mission {
   id          String   @id @default(uuid())
   wardId      String
   ward        Ward     @relation(fields: [wardId], references: [id])
+  title       String   @default("Mission")
+  description String   @default("")
   location    String   // Address or Description
   geoLat      Float
   geoLng      Float

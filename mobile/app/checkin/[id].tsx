@@ -139,9 +139,7 @@ export default function CheckinScreen() {
                 Alert.alert('Saved Offline 💾', 'Your report has been saved and will sync automatically when internet returns.');
                 router.replace('/(tabs)/missions');
             } else {
-                await client.post('/checkins', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' },
-                });
+                await client.post('/checkins', formData);
                 Alert.alert('Success', 'Check-in submitted successfully! (+10 points)');
                 router.replace('/(tabs)/missions');
             }

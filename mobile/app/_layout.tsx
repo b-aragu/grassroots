@@ -13,9 +13,8 @@ import "../global.css";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-    const [loaded] = useFonts({
-        SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-    });
+    // Removed missing font loading logic
+    const loaded = true;
 
     useEffect(() => {
         if (loaded) {
@@ -23,9 +22,9 @@ export default function RootLayout() {
         }
     }, [loaded]);
 
-    if (!loaded) {
-        return null;
-    }
+    // if (!loaded) {
+    //    return null;
+    // }
 
     return (
         <SafeAreaProvider>

@@ -91,6 +91,57 @@ async function main() {
     }
     console.log(`\n✅ Created ${agents.length} agents.`);
 
+    // --- CREATE TEST USER ("John Kimani") ---
+    console.log('Creating Test User for Mobile App...');
+    const testUserEmail = 'john.kimani@grassroots.local';
+    // Re-use hashed password
+
+    let testUser = await prisma.user.findUnique({ where: { email: testUserEmail } });
+    if (!testUser) {
+        testUser = await prisma.user.create({
+            data: {
+                email: testUserEmail,
+                name: 'John Kimani',
+                password: hashedPassword,
+                role: 'VOLUNTEER',
+                points: 120,
+            }
+        });
+    }
+
+    // Assign PENDING missions to Test User
+    const kasaraniWardId = wardMap['Kasarani'];
+    if (kasaraniWardId && testUser) {
+        await prisma.mission.createMany({
+            data: [
+                {
+                    wardId: kasaraniWardId,
+                    location: 'Mwiki Primary School Polling Station',
+                    geoLat: -1.220,
+                    geoLng: 36.900,
+                    status: 'PENDING',
+                    assignedToId: testUser.id,
+                    createdAt: new Date(),
+                    title: 'Morning Patrol - Mwiki',
+                    description: 'Verify polling station setup and report any crowd issues.'
+                },
+                {
+                    wardId: kasaraniWardId,
+                    location: 'Shell Petrol Station, Kasarani',
+                    geoLat: -1.222,
+                    geoLng: 36.905,
+                    status: 'PENDING',
+                    assignedToId: testUser.id,
+                    createdAt: new Date(),
+                    title: 'Supporter Rally Check',
+                    description: 'Monitor the gathering near the station and distribute flyers.'
+                }
+            ]
+        });
+        console.log('✅ Created Test User (john.kimani@grassroots.local) with 2 assigned missions.');
+    }
+    // ----------------------------------------
+
     // 3. Create Missions and Checkins (History)
     console.log('Creating activity history...');
 
@@ -136,7 +187,9 @@ async function main() {
                     geoLng: lng,
                     status: 'COMPLETED',
                     assignedToId: agent.id,
-                    createdAt: actionTime
+                    createdAt: actionTime,
+                    title: `Patrol ${agent.assignedWardName}`,
+                    description: 'Routine patrol and check-in.'
                 }
             });
 
